@@ -2,13 +2,16 @@ import React from 'react';
 import { AppBar, Toolbar, Button, Typography } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import BugReportIcon from '@mui/icons-material/BugReport';
 
 interface TopBarProps {
   onRun: () => void;
   onReview: () => void;
+  onFixError: () => void;
+  hasError: boolean;
 }
 
-const TopBar = ({ onRun, onReview }: TopBarProps) => {
+const TopBar = ({ onRun, onReview, onFixError, hasError }: TopBarProps) => {
   return (
     <AppBar position="static">
       <Toolbar>
@@ -28,6 +31,14 @@ const TopBar = ({ onRun, onReview }: TopBarProps) => {
           onClick={onReview}
         >
           Review
+        </Button>
+        <Button
+          color="inherit"
+          startIcon={<BugReportIcon />}
+          onClick={onFixError}
+          disabled={!hasError}
+        >
+          Fix Error
         </Button>
       </Toolbar>
     </AppBar>

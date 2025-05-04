@@ -12,7 +12,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 
 interface FileExplorerProps {
-  onFileSelect: (filePath: string) => void;
+  onFileSelect: (filePath: string, content?: string) => void;
 }
 
 interface FileNode {
@@ -66,12 +66,39 @@ const FileExplorer = ({ onFileSelect }: FileExplorerProps) => {
 
   const handleFileClick = (node: FileNode) => {
     if (node.type === 'file') {
-      // Normalize path before sending
       const normalizedPath = node.path.replace(/\\/g, '/');
       console.log('Opening file:', normalizedPath);
-      onFileSelect(normalizedPath);
+      
+      // Always fetch content for any file type
+      fetchFileContent(normalizedPath);
     } else {
       toggleFolder(node.path);
+    }
+  };
+
+  const fetchFileContent = async (filePath: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/files/content?path=${encodeURIComponent(filePath)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.content !== undefined) {
+        // Pass both the file path and content to the parent component
+        onFileSelect(filePath, data.content);
+      } else {
+        console.error('No content returned for file:', filePath);
+      }
+    } catch (error) {
+      console.error('Error fetching file content:', error);
     }
   };
 
@@ -85,7 +112,7 @@ const FileExplorer = ({ onFileSelect }: FileExplorerProps) => {
           <ListItemButton
             onClick={() => handleFileClick(node)}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={{ minWidth: '36px' }}>
               {node.type === 'directory' ? (
                 expandedFolders.has(node.path) ? (
                   <FolderOpenIcon />
@@ -96,7 +123,14 @@ const FileExplorer = ({ onFileSelect }: FileExplorerProps) => {
                 <InsertDriveFileIcon />
               )}
             </ListItemIcon>
-            <ListItemText primary={node.name} />
+            <ListItemText 
+              primary={node.name} 
+              primaryTypographyProps={{
+                noWrap: true,
+                title: node.name,
+                sx: { overflow: 'hidden', textOverflow: 'ellipsis' }
+              }}
+            />
           </ListItemButton>
         </ListItem>
         {node.type === 'directory' &&
@@ -114,6 +148,20 @@ const FileExplorer = ({ onFileSelect }: FileExplorerProps) => {
         height: '100%',
         overflow: 'auto',
         backgroundColor: '#252526',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+          height: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#1e1e1e',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#424242',
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#555',
+        },
       }}
     >
       <List component="nav" dense>
